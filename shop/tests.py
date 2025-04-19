@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from .models import Product, Category, ProductProxy
 
-class ProductViewTest(TestCase):
+class ProductsViewTest(TestCase):
     def test_get_products(self):
         small_gif = (
         b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
@@ -43,7 +43,7 @@ class ProductViewTest(TestCase):
         self.assertContains(response, product_1)
         self.assertContains(response, product_2)
 
-class ProductsViewTest(TestCase):
+class ProductViewTest(TestCase):
     def test_get_product(self):
         small_gif = (
         b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
