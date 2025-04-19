@@ -21,9 +21,9 @@ class UserCreateForm(UserCreationForm):
         self.fields['password2'].help_text = 'Confirm your password'
 
     def clean_email(self):
-        email = self.cleaned_data['email'].lower()
+        email = self.cleaned_data.get('email').lower()
 
-        if User.objects.filter(email=email).exists() and len(email) > 254:
+        if User.objects.filter(email=email).exists() or len(email) > 254:
             raise forms.ValidationError("Email already exists or too long")
         
         return email
@@ -46,6 +46,15 @@ class UserUpdateForm(forms.ModelForm):
 
         self.fields['email'].label = 'You email address'
         self.fields['email'].required = True
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].lower()
+
+        if User.objects.filter(email=email).exclude(id=self.instance.id).exists() or len(email) > 254:
+            raise forms.ValidationError("Email already in use or too long")
+        
+        return email
+    
 
 class AccountPasswordChangeForm(PasswordChangeForm):
     class Meta:
