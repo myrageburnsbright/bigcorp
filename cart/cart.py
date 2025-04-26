@@ -26,9 +26,7 @@ class Cart():
         for item in cart.values():
             item['price'] = Decimal(item['price'])
             item['total_price'] = item['price'] * item['qty']
-            #print(self.cart['total_price'])
             yield item
-
 
     def add(self, product, quantity=1):
         product_id = str(product.id)

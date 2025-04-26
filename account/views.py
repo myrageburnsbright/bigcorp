@@ -46,6 +46,9 @@ def login_user(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
+                next_page = request.GET.get("next")
+                if next_page:
+                    return redirect(next_page)
                 return redirect(reverse("account:dashboard"))
             else:
                 messages.info(request, "Invalid username or password")

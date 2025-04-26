@@ -1,5 +1,6 @@
 from pathlib import Path
 from poplib import CR
+from django.conf.global_settings import STATICFILES_DIRS
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'django_google_fonts',
+
     #third-party libs:
     'mathfilters',
     'crispy_forms',
     'crispy_bootstrap5',
     'django_email_verification',
+    'sorl.thumbnail',
 
     #apps
     'shop',
@@ -50,7 +53,7 @@ ROOT_URLCONF = 'bigcorp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'bigcorp' / 'templates' ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,6 +102,9 @@ ADMIN_SITE_URL = 'shop/product/'
 #files
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'static'
+STATICFILES_DIRS = [
+    BASE_DIR / 'bigcorp' / 'static',
+]
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -107,7 +113,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
+LOGIN_URL = '/account/login/'
 def email_verified_callback(user):
     user.is_active = True
 
@@ -149,3 +155,15 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'myrageburnsbright@gmail.com'
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
+
+#Stripe
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
+STRIPE_API_VERSION=env('STRIPE_API_VERSION')
+
+#Yookassa
+YOOKASSA_SHOP_ID = env('YOOKASSA_SHOP_ID')
+YOOKASSA_SECRET_KEY = env('YOOKASSA_SECRET_KEY')
+
+GOOGLE_FONTS = ["Kablammo", "Roboto"]
+GOOGLE_FONTS_DIR = BASE_DIR / 'static'
