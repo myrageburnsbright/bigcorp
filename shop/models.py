@@ -1,15 +1,10 @@
 import random, string
-
+from django.core.validators import MinValueValidator,MaxValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+from decimal import Decimal
 
-def rand_slug():
-    """
-    Returns a random 3-character slug string (letters and digits)
-    """
-
-    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(3))
 
 class Category(models.Model):
     """
@@ -28,6 +23,13 @@ class Category(models.Model):
         verbose_name = ("Категория")
         verbose_name_plural = ("Категории")
         
+    @staticmethod
+    def rand_slug():
+        """
+        Returns a random 3-character slug string (letters and digits)
+        """
+
+        return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(3))
     def __str__(self):
         """
         Return a string representation of the category, showing the full 
@@ -51,7 +53,7 @@ class Category(models.Model):
         """
         
         if not self.slug:
-            self.slug = slugify(rand_slug() + '-pickBetter' + self.name)
+            self.slug = slugify(self.rand_slug() + '-pickBetter' + self.name)
         super(Category, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -66,21 +68,38 @@ class Product(models.Model):
     title = models.CharField('Название',max_length=250)
     brand = models.CharField('Брэнд',max_length=250)
     slug = models.SlugField('URL', max_length=250)
-    image = models.ImageField('Изображение',upload_to='products/products/%Y/%m/%d')
+    image = models.ImageField('Изображение',upload_to='products/products/%Y/%m/%d', default='products/products/default.jpg')
     description = models.TextField('Описание', blank=True)
     price = models.DecimalField('Цена', max_digits=7, decimal_places=2, default=0.00)
-    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField('Дата обновления', auto_now=True)
     available = models.BooleanField('В наличии', default=True)
-
+    discount = models.IntegerField(default=0, validators=[MinValueValidator(0),MaxValueValidator(100)])
     class Meta:
         verbose_name = ("Продукт")
         verbose_name_plural = ("Продукты")
+        ordering = ['-created_at']
         
     def __str__(self):
         return self.title
     def get_absolute_url(self):
         return reverse("shop:product", kwargs={"slug": self.slug})
+    def get_discount_price(self):
+        """
+        Calculate the discounted price of the product.
+
+        Returns:
+            float: The discounted price of the product.
+        """
+
+        return round(self.price * (1 - Decimal(self.discount / 100)), 2)
+    
+    @property
+    def full_image_url(self):
+        """
+        Return the full URL of the product image if no empty string
+        """
+        return self.image.url if self.image else ''
 
 class ProductManager(models.Manager):
     def get_queryset(self):

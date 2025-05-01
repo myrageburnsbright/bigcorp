@@ -1,12 +1,16 @@
+import weasyprint
 from decimal import Decimal
-from locale import currency
+import string
 import uuid
+from django.templatetags.static import static
 from django.utils.http import urlencode
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 import stripe
 from cart.cart import Cart
 from yookassa import Configuration, Payment
@@ -71,11 +75,7 @@ def complete_order(request):
         cart = Cart(request)
         total_price = cart.get_total_price()
 
-        match payment_type:
-            case "stripe-payment":
-
-
-                shipping_address, _ = ShippingAdress.objects.get_or_create(
+        shipping_address, _ = ShippingAdress.objects.get_or_create(
                     user=request.user,
                     defaults={
                         "full_name": name,
@@ -87,6 +87,9 @@ def complete_order(request):
                         "zip": zip,
                     },
                 )
+        
+        match payment_type:
+            case "stripe-payment":
                 session_data = {
                     'mode' : 'payment',
                     'success_url' : request.build_absolute_uri(reverse('payment:payment-success')),
@@ -94,37 +97,41 @@ def complete_order(request):
                     'line_items' : []
                 }
                 
-
-                try:
-                    order = Order.objects.create(
-                        user=request.user,
-                        amount=total_price,
-                        shipping_address=shipping_address,
-                    )
-                    for item in cart:
-                        OrderItem.objects.create(
-                            order=order,
-                            product=item["product"],
-                            price=item["price"],
-                            quantity=item["qty"],
+                if request.user.is_authenticated:
+                    try:
+                        order = Order.objects.create(
                             user=request.user,
+                            amount=total_price,
+                            shipping_address=shipping_address,
                         )
-                        session_data['line_items'].append({
-                            'price_data' : {
-                                'currency' : 'usd',
-                                'unit_amount' : int(item['price'] * Decimal(100)),
-                                'product_data' : {
-                                    'name' : item['product'].title
-                                }
-                            },
-                            'quantity' : item['qty'],
-                        })
-
-                    session = stripe.checkout.Session.create(**session_data)
-                    return redirect(session.url, code=303)
-                except Exception as e:
-                    messages.error(request, f"{e}")
-                    return redirect(reverse("cart:cart-view"))
+                        for item in cart:
+                            OrderItem.objects.create(
+                                order=order,
+                                product=item["product"],
+                                price=item["price"],
+                                quantity=item["qty"],
+                                user=request.user,
+                            )
+                            session_data['line_items'].append({
+                                'price_data' : {
+                                    'currency' : 'usd',
+                                    'unit_amount' : int(item['price'] * Decimal(100)),
+                                    'product_data' : {
+                                        'name' : item['product'].title
+                                    }
+                                },
+                                'quantity' : item['qty'],
+                            })
+                        session_data['client_reference_id'] = str(order.id)
+                        session = stripe.checkout.Session.create(**session_data)
+                        return redirect(session.url, code=303)
+                    except Exception as e:
+                        messages.error(request, f"{e}")
+                        return redirect(reverse("cart:cart-view"))
+                else:
+                    messages.error(request, "Please authorize")
+                    url = reverse("account:login") + "?" + urlencode({"next": reverse("cart:cart-view")})
+                    return redirect(url)
             case "yookassa-payment":
                 idempotence_key = uuid.uuid4()
                 currency = "RUB"
@@ -144,18 +151,6 @@ def complete_order(request):
                     'test' : True,
                     "description" : description, 
                 }, idempotence_key)
-                shipping_address, _ = ShippingAdress.objects.get_or_create(
-                    user=request.user,
-                    defaults={
-                        "full_name": name,
-                        "email": email,
-                        "street_address": street_address,
-                        "apartment_address": apartment_address,
-                        "country": country,
-                        "city": city,
-                        "zip": zip,
-                    },
-                )
 
                 confirmation_url = payment.confirmation.confirmation_url
                 order = Order.objects.create(
@@ -181,3 +176,19 @@ def payment_success(request):
 
 def payment_failed(request):
     return render(request, "payment/payment-failed.html")
+
+@staff_member_required
+def admin_order_pdf(request, order_id):
+    try:
+        order = Order.objects.select_related('user', 'shipping_address').get(id=order_id)
+    except Order.DoesNotExist:
+        raise Http404("Order does not exist")
+    
+    html = render_to_string('payment/order/pdf/pdf_invoice.html', {'order': order})
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=order_{order.id}.pdf'
+    css_path=static('payment/css/pdf.css').lstrip('/')
+    stylesheets = [weasyprint.CSS(css_path)]
+    weasyprint.HTML(string=html).write_pdf(response, stylesheets=stylesheets)
+    return response

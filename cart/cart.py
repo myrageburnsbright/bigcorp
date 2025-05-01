@@ -32,7 +32,7 @@ class Cart():
         product_id = str(product.id)
 
         if product_id not in self.cart:
-            self.cart[product_id] = {'qty':quantity, 'price':str(product.price)}
+            self.cart[product_id] = {'qty':quantity, 'price':str(product.get_discount_price())}
         self.cart[product_id]['qty'] = quantity
 
         self.session.modified = True

@@ -1,6 +1,7 @@
 from pathlib import Path
 from poplib import CR
 from django.conf.global_settings import STATICFILES_DIRS
+from django.contrib import messages
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,12 +31,16 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'django_email_verification',
     'sorl.thumbnail',
+    'django_celery_beat',
+    'django_celery_results',
+    "django_htmx",
 
     #apps
     'shop',
     'account',
     'cart.apps.CartConfig',
     'payment',
+    'recommend'
 ]
 
 MIDDLEWARE = [
@@ -44,6 +49,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "django_htmx.middleware.HtmxMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -108,6 +114,14 @@ STATICFILES_DIRS = [
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+MESSAGE_TAGS = {
+    messages.ERROR: 'alert-danger',
+    messages.SUCCESS: 'alert-success',
+    messages.INFO: 'alert-info',
+    messages.WARNING: 'alert-warning',
+    messages.DEBUG: 'alert-secondary',
+}
+
 #crispy
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -160,10 +174,18 @@ EMAIL_USE_TLS = True
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_API_VERSION=env('STRIPE_API_VERSION')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
 
 #Yookassa
 YOOKASSA_SHOP_ID = env('YOOKASSA_SHOP_ID')
 YOOKASSA_SECRET_KEY = env('YOOKASSA_SECRET_KEY')
 
-GOOGLE_FONTS = ["Kablammo", "Roboto"]
+GOOGLE_FONTS = ["Montserrat:wght@300,400", "Roboto"]
 GOOGLE_FONTS_DIR = BASE_DIR / 'static'
+
+#Celery
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_EXTENDED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

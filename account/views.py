@@ -46,6 +46,7 @@ def login_user(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
+                messages.success(request, f"Welcome back {user.first_name} you logined successfully!!!")
                 next_page = request.GET.get("next")
                 if next_page:
                     return redirect(next_page)
