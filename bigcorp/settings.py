@@ -3,6 +3,7 @@ from poplib import CR
 from django.conf.global_settings import STATICFILES_DIRS
 from django.contrib import messages
 import environ
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
@@ -13,7 +14,7 @@ SECRET_KEY = 'django-insecure-bf2_2a84g+lu!_e*5_^x(b)f=x2g*%6q1542h5p_+h-k3)2*d)
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 INSTALLED_APPS = [
@@ -34,13 +35,17 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     "django_htmx",
+    'rest_framework',
+    'djoser',
+    'drf_yasg',
 
     #apps
     'shop',
     'account',
     'cart.apps.CartConfig',
     'payment',
-    'recommend'
+    'recommend',
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -189,3 +194,30 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_RESULT_EXTENDED = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# REST_FRAMEWORK
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "api.permissions.IsAdminOrReadOnly",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 15,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
+DJOSER = {
+    "LOGIN_FIELD": "email",
+    "SERIALIZERS": {
+        "user_create": "api.serializers.CustomUserCreateSerializer",
+    },
+    'AUTH_HEADER_TYPES': ('JWT',),
+
+}
