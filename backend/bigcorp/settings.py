@@ -1,5 +1,4 @@
 from pathlib import Path
-from poplib import CR
 from django.conf.global_settings import STATICFILES_DIRS
 from django.contrib import messages
 import environ
@@ -14,7 +13,7 @@ env.read_env(ENV_DIR/ '.env')
 
 SECRET_KEY = env('SECRET_KEY')
 
-DEBUG = True
+DEBUG = env('DEBUG', default=False)
 
 ALLOWED_HOSTS = ["*"]
 
