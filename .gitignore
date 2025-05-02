@@ -9,3 +9,4 @@ migrations/
 .env
 /static/
 dump.rdb
+fonts/
