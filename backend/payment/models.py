@@ -4,7 +4,7 @@ from django.db import models
 from django.core.validators import MinValueValidator,MaxValueValidator
 from django.contrib.auth import get_user_model
 from shop.models import Product,ProductProxy, Category
-
+from django.urls import reverse
 User = get_user_model()
 
 class ShippingAdress(models.Model):
@@ -37,11 +37,11 @@ class ShippingAdress(models.Model):
             "user": user, 
             "full_name": user.first_name + " " + user.last_name,
             "email": user.email,
-            "street_address": "fill address",
-            "apartment_address": "fill apartment",
-            "country": "fill country",
-            "city": "fill city",
-            "zip": "fill zip",
+            "street_address": "42 McDonald Avenue",
+            "apartment_address": "2",
+            "country": "United States",
+            "city": "New York",
+            "zip": "12218",
         }
         shipping_addres= cls(**default_shipping_adress)
         shipping_addres.save()

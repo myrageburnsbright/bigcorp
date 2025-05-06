@@ -4,6 +4,7 @@ volumes:
   postgres_data:
   static_data:
   media_data:
+  redis_data:
 
 services:
   db:
@@ -26,15 +27,21 @@ services:
     ports:
       - 8000:8000
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: sh -c "python3 manage.py makemigrations &&
                     python3 manage.py migrate &&
                     python3 manage.py collectstatic --noinput &&
-                    gunicorn bigcorp.wsgi:application --bind 0.0.0.0:8000 &&
-                    stripe listen --forward-to localhost:8000/payment/webhook-stripe/"
+                    gunicorn bigcorp.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -"
 
   redis:
     image: redis:7.2.3-alpine
     container_name: bigcorp-redis
+    volumes:
+    - redis_data:/data
     restart: unless-stopped
 
   celery:

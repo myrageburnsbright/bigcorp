@@ -1,7 +1,7 @@
 from pathlib import Path
 from django.conf.global_settings import STATICFILES_DIRS
 from django.contrib import messages
-import environ
+import environ, sys
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -59,6 +59,32 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    env('DOMAIN_NGROK'),
+]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # или INFO/ERROR, в зависимости от нужного уровня
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
 
 ROOT_URLCONF = 'bigcorp.urls'
 
@@ -154,7 +180,13 @@ def email_verified_callback(user):
 
 # Global Package Settings
 EMAIL_FROM_ADDRESS = 'noreply@bigcorp.com'  # mandatory
-EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'  # mandatory (unless you use a custom link)
+
+if DEBUG:
+    EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'
+# Настройки для продакшн
+else:
+    EMAIL_PAGE_DOMAIN = env('DOMAIN_NGROK')
+#EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'  # mandatory (unless you use a custom link)
 EMAIL_MULTI_USER = False  # optional (defaults to False)
 
 # Email Verification Settings (mandatory for email sending)
@@ -179,8 +211,8 @@ EMAIL_MAIL_CALLBACK = email_verified_callback
 # EMAIL_PASSWORD_CALLBACK = password_change_callback
 
 # For Django Email Backend
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'myrageburnsbright@gmail.com'
@@ -191,7 +223,10 @@ EMAIL_USE_TLS = True
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_API_VERSION=env('STRIPE_API_VERSION')
-STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
+if DEBUG:
+    STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET_DEV')
+else:
+    STRIPE_WEBHOOK_SECRET =  env('STRIPE_WEBHOOK_SECRET')
 
 #Yookassa
 YOOKASSA_SHOP_ID = env('YOOKASSA_SHOP_ID')
