@@ -15,8 +15,8 @@ SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','www.devicepro.info','devicepro.info']
+FORCE_SCRIPT_NAME = '/django'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -149,12 +149,12 @@ USE_TZ = True
 ADMIN_SITE_URL = 'shop/product/'
 
 #files
-STATIC_URL = 'static/'
+STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
     BASE_DIR / 'bigcorp' / 'static',
 ]
-MEDIA_URL = 'media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 MESSAGE_TAGS = {

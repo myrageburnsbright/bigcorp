@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y libpq-dev
 RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev
 RUN apt-get install -y gobject-introspection
 RUN apt-get update && apt-get install -y libpango-1.0-0 libpangoft2-1.0-0
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 WORKDIR /app
 

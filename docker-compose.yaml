@@ -32,10 +32,34 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    command: sh -c "python3 manage.py makemigrations &&
-                    python3 manage.py migrate &&
-                    python3 manage.py collectstatic --noinput &&
-                    gunicorn bigcorp.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -"
+    command: |
+      sh -c '
+        echo "Waiting for PostgreSQL to be ready..."
+        
+        # Loop until PostgreSQL is ready
+        # Ensure nc (netcat) is installed in your backend Docker image!
+        # For Debian/Ubuntu: apt-get install -y netcat-traditional or netcat-openbsd
+        # For Alpine: apk add --no-cache netcat-openbsd
+        while ! nc -z db 5432; do
+          echo -n "." # Print a small dot to show it is waiting
+          sleep 1
+        done
+        echo # Newline after the dots
+        echo "PostgreSQL is ready."
+        
+        echo "Running Django makemigrations..."
+        python3 manage.py makemigrations && \
+        echo "Running Django migrate..." && \
+        python3 manage.py migrate && \
+        echo "Running Django collectstatic..." && \
+        python3 manage.py collectstatic --noinput && \
+        echo "Starting Gunicorn..." && \
+        exec gunicorn bigcorp.wsgi:application \
+          --bind 0.0.0.0:8000 \
+          --workers 3 \
+          --access-logfile - \
+          --error-logfile -
+      '
 
   redis:
     image: redis:7.2.3-alpine
@@ -64,5 +88,5 @@ services:
       - static_data:/app/static
       - media_data:/app/media
     ports:
-      - 80:80
+      - 8081:80
     restart: always
