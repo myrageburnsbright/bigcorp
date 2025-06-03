@@ -4,7 +4,6 @@ venv
 db.sqlite3
 __pycache__
 media/
-migrations/
 .vscode/
 .env
 .envdev

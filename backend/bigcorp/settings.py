@@ -1,5 +1,4 @@
 from pathlib import Path
-from django.conf.global_settings import STATICFILES_DIRS
 from django.contrib import messages
 import environ, sys
 from datetime import timedelta
