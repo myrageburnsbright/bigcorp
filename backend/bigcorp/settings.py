@@ -14,8 +14,17 @@ SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','www.devicepro.info','devicepro.info']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','www.' + env('DOMAIN_TRUSTED'), env('DOMAIN_TRUSTED')]
 FORCE_SCRIPT_NAME = '/django'
+CSRF_TRUSTED_ORIGINS = [
+    'https://' + env('DOMAIN_TRUSTED'),
+    'https://www.' + env('DOMAIN_TRUSTED'),
+    env('DOMAIN_NGROK'),
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,10 +66,6 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    env('DOMAIN_NGROK'),
 ]
 
 LOGGING = {
@@ -184,7 +189,7 @@ if DEBUG:
     EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'
 # Настройки для продакшн
 else:
-    EMAIL_PAGE_DOMAIN = env('DOMAIN_NGROK')
+    EMAIL_PAGE_DOMAIN = 'https://' + env('DOMAIN_TRUSTED') + FORCE_SCRIPT_NAME 
 #EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'  # mandatory (unless you use a custom link)
 EMAIL_MULTI_USER = False  # optional (defaults to False)
 

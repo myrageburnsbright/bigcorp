@@ -36,15 +36,11 @@ services:
       sh -c '
         echo "Waiting for PostgreSQL to be ready..."
         
-        # Loop until PostgreSQL is ready
-        # Ensure nc (netcat) is installed in your backend Docker image!
-        # For Debian/Ubuntu: apt-get install -y netcat-traditional or netcat-openbsd
-        # For Alpine: apk add --no-cache netcat-openbsd
         while ! nc -z db 5432; do
-          echo -n "." # Print a small dot to show it is waiting
+          echo -n "."
           sleep 1
         done
-        echo # Newline after the dots
+        echo
         echo "PostgreSQL is ready."
         
         echo "Running Django makemigrations..."
