@@ -32,10 +32,31 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    command: sh -c "python3 manage.py makemigrations &&
-                    python3 manage.py migrate &&
-                    python3 manage.py collectstatic --noinput &&
-                    gunicorn bigcorp.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -"
+    command: |
+      sh -c '
+        echo "Waiting for PostgreSQL to be ready..."
+        
+        while ! nc -z db 5432; do
+          echo -n "."
+          sleep 1
+        done
+        echo
+        echo "PostgreSQL is ready."
+        
+        echo "Running Django makemigrations..."
+        python3 manage.py makemigrations && \
+        echo "Running Django migrate..." && \
+        python3 manage.py migrate && \
+        echo "Running Django collectstatic..." && \
+        python3 manage.py collectstatic --noinput && \
+        echo "Starting Gunicorn..." && \
+        exec gunicorn bigcorp.wsgi:application \
+          --bind 0.0.0.0:8000 \
+          --workers 3 \
+          --log-level=debug \
+          --access-logfile - \
+          --error-logfile -
+      '
 
   redis:
     image: redis:7.2.3-alpine
@@ -63,6 +84,5 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - static_data:/app/static
       - media_data:/app/media
-    ports:
-      - 80:80
+      - /opt/sockets/:/sockets/
     restart: always

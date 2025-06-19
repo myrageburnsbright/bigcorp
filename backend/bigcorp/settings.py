@@ -14,8 +14,17 @@ SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','www.' + env('DOMAIN_TRUSTED'), env('DOMAIN_TRUSTED')]
+FORCE_SCRIPT_NAME = '/django'
+CSRF_TRUSTED_ORIGINS = [
+    'https://' + env('DOMAIN_TRUSTED'),
+    'https://www.' + env('DOMAIN_TRUSTED'),
+    env('DOMAIN_NGROK'),
+]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -59,31 +68,50 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    env('DOMAIN_NGROK'),
-]
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+
+    # --- ШАГ 1: Определяем форматтеры ---
+    # Форматтер описывает, как будет выглядеть каждая строка лога.
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module}:{lineno} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    # --- ШАГ 2: Определяем обработчики (куда выводить логи) ---
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
+            # Применяем наш новый информативный форматтер
+            'formatter': 'verbose',
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',  # или INFO/ERROR, в зависимости от нужного уровня
-    },
+
+    # --- ШАГ 3: Определяем сами логгеры ---
     'loggers': {
+        # Логгер для самого Django
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO', # Показывает только важные сообщения от Django
+            'propagate': False,
+        },
+        # Логгер для твоего приложения (замени 'main' на имя своего приложения)
+        'main': {
+            'handlers': ['console'],
+            'level': 'DEBUG', # Показывает все сообщения, включая отладочные
             'propagate': False,
         },
     },
 }
+
 
 ROOT_URLCONF = 'bigcorp.urls'
 
@@ -148,12 +176,12 @@ USE_TZ = True
 ADMIN_SITE_URL = 'shop/product/'
 
 #files
-STATIC_URL = 'static/'
+STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
     BASE_DIR / 'bigcorp' / 'static',
 ]
-MEDIA_URL = 'media/'
+MEDIA_URL = FORCE_SCRIPT_NAME + '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 MESSAGE_TAGS = {
@@ -184,7 +212,7 @@ if DEBUG:
     EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'
 # Настройки для продакшн
 else:
-    EMAIL_PAGE_DOMAIN = env('DOMAIN_NGROK')
+    EMAIL_PAGE_DOMAIN = 'https://' + env('DOMAIN_TRUSTED') + FORCE_SCRIPT_NAME 
 #EMAIL_PAGE_DOMAIN = 'http://127.0.0.1:8000'  # mandatory (unless you use a custom link)
 EMAIL_MULTI_USER = False  # optional (defaults to False)
 
