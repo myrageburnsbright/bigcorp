@@ -53,6 +53,7 @@ services:
         exec gunicorn bigcorp.wsgi:application \
           --bind 0.0.0.0:8000 \
           --workers 3 \
+          --log-level=debug \
           --access-logfile - \
           --error-logfile -
       '

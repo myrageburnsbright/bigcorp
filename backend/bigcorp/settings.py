@@ -71,24 +71,47 @@ MIDDLEWARE = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+
+    # --- ШАГ 1: Определяем форматтеры ---
+    # Форматтер описывает, как будет выглядеть каждая строка лога.
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module}:{lineno} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    # --- ШАГ 2: Определяем обработчики (куда выводить логи) ---
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
+            # Применяем наш новый информативный форматтер
+            'formatter': 'verbose',
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',  # или INFO/ERROR, в зависимости от нужного уровня
-    },
+
+    # --- ШАГ 3: Определяем сами логгеры ---
     'loggers': {
+        # Логгер для самого Django
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO', # Показывает только важные сообщения от Django
+            'propagate': False,
+        },
+        # Логгер для твоего приложения (замени 'main' на имя своего приложения)
+        'main': {
+            'handlers': ['console'],
+            'level': 'DEBUG', # Показывает все сообщения, включая отладочные
             'propagate': False,
         },
     },
 }
+
 
 ROOT_URLCONF = 'bigcorp.urls'
 
